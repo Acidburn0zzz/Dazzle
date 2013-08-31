@@ -9,6 +9,7 @@
 # Check if the system is supported by using bash variable $OSTYPE - see 'man bash'
 SYS_LINUX=
 SYS_FREEBSD=
+shopt -s nocasematch
 case $OSTYPE in
   linux-gnu*) SYS_LINUX=1
     ;;
