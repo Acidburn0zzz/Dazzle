@@ -6,8 +6,20 @@
 # To Public License, Version 2, as published by Sam Hocevar. See
 # http://sam.zoy.org/wtfpl/COPYING for more details.
 
+# Check if the system is supported by using bash variable $OSTYPE - see 'man bash'
+SYS_LINUX=
+SYS_FREEBSD=
+case $OSTYPE in
+  linux-gnu*) SYS_LINUX=1
+    ;;
+  freebsd*) SYS_FREEBSD=1
+    ;;
+  *) echo "Sorry, your system $OSTYPE is not supported by Dazzle yet."
+    exit 1
+    ;;
+esac
 
-# Check if we're root, if not show a warning
+# Check if we're root or are run via a sudo variant, if not show a warning
 if [[ $UID -ne 0 ]]; then
   case $1 in
     ""|help) # You should be allowed to check the help without being root
@@ -54,12 +66,24 @@ create_account () {
     GIT_SHELL=`which git-shell`
 
     if [ "$STORAGE" = "$DAZZLE_GROUP" ]; then
-      echo "  -> useradd $DAZZLE_USER --create-home --home $DAZZLE_HOME --system --shell $GIT_SHELL --password \"*\" --gid $DAZZLE_GROUP"
-      useradd $DAZZLE_USER --create-home --home $DAZZLE_HOME --system --shell $GIT_SHELL --password "*" --gid $DAZZLE_GROUP
-
+      if [ "$SYS_LINUX" ]; then  
+        echo "  -> useradd $DAZZLE_USER --create-home --home $DAZZLE_HOME --system --shell $GIT_SHELL --password \"*\" --gid $DAZZLE_GROUP"
+        useradd $DAZZLE_USER --create-home --home $DAZZLE_HOME --system --shell $GIT_SHELL --password "*" --gid $DAZZLE_GROUP
+      # FreeBSD uses 'pw useradd' for user creation:
+      elif [ "$SYS_FREEBSD" ]; then
+        echo "  -> echo \"*\" | pw user add -n $DAZZLE_USER -g $DAZZLE_GROUP -m -s $GIT_SHELL -h -"	
+        echo "*" | pw user add -n $DAZZLE_USER -g $DAZZLE_GROUP -m -s $GIT_SHELL -h -
+      fi
     else
-      echo "  -> useradd $DAZZLE_USER --create-home --home $DAZZLE_HOME --system --shell $GIT_SHELL --password \"*\" --user-group"
-      useradd $DAZZLE_USER --create-home --home $DAZZLE_HOME --system --shell $GIT_SHELL --password "*" --user-group
+      if [ "$SYS_LINUX" ]; then
+        echo "  -> useradd $DAZZLE_USER --create-home --home $DAZZLE_HOME --system --shell $GIT_SHELL --password \"*\" --user-group"
+        useradd $DAZZLE_USER --create-home --home $DAZZLE_HOME --system --shell $GIT_SHELL --password "*" --user-group
+      elif [ "$SYS_FREEBSD" ]; then
+        echo "  -> pw groupadd -n $DAZZLE_GROUP"
+        echo "  -> echo \"*\" | pw user add -n $DAZZLE_USER -g $DAZZLE_GROUP -m -s $GIT_SHELL -h -" 
+        pw groupadd -n $DAZZLE_GROUP
+        echo "*" | pw user add -n $DAZZLE_USER -g $DAZZLE_GROUP -m -s $GIT_SHELL -h -
+      fi
     fi
   fi
 
@@ -146,6 +170,9 @@ install_git () {
       echo "  -> pacman -S git"
       pacman -S git
 
+    elif [ "$SYS_FREEBSD" ] && [ -f "/usr/ports/devel/git/Makefile" ]; then
+      echo "  -> cd /usr/ports/devel/git | make install clean"
+      cd /usr/ports/devel/git && make install clean
     else
       echo "${BOLD}Could not install Git... Please install it manually before continuing.{$NORMAL}"
       echo
@@ -245,6 +272,7 @@ case $1 in
     if [ -n "$2" ]; then
       echo "${BOLD}Creating project \"$2\"...${NORMAL}"
       create_project "$2"
+
     else
       echo "Please provide a project name."
     fi
