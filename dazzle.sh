@@ -245,15 +245,18 @@ case $1 in
     if [ -n "$2" ]; then
       echo "${BOLD}Creating project \"$2\"...${NORMAL}"
       create_project "$2"
-
     else
       echo "Please provide a project name."
     fi
     ;;
 
   create-encrypted)
-    echo "${BOLD}Creating encrypted project \"$2\"...${NORMAL}"
-    create_project "$2-crypto"
+    if [ -n "$2" ]; then
+      echo "${BOLD}Creating encrypted project \"$2\"...${NORMAL}"
+      create_project "$2-crypto"
+    else
+      echo "Please provide a project name."
+    fi
     ;;
 
   link)
