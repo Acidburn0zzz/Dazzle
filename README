@@ -3,6 +3,16 @@
 An easier and less error prone way to set up a SparkleShare host.
 Created to work on Debian and Red Hat based systems.
 
+# Note on this fork:
+
+This fork adds compatibility for FreeBSD systems, originally a patch
+written by aXon (https://github.com/aXon/Dazzle). I made minor changes
+to the patch and patched it against upstream master. Will probably
+support this as long as my server stays on FreeBSD =)
+
+# Note for FreeBSD users:
+
+Before using this program, you are required to have installed bash. 
 
 ## Usage
 
