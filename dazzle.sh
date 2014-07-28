@@ -15,6 +15,8 @@ case $OSTYPE in
     ;;
   freebsd*) SYS_FREEBSD=1
     ;;
+  openbsd*) SYS_OPENBSD=1
+    ;;
   *) echo "Sorry, your system $OSTYPE is not supported by Dazzle yet."
     exit 1
     ;;
@@ -65,7 +67,7 @@ create_account () {
   else
     STORAGE=`grep "^$DAZZLE_GROUP:" /etc/group | cut -d : -f 1`
     GIT_SHELL=`which git-shell`
-
+	# group already exists:
     if [ "$STORAGE" = "$DAZZLE_GROUP" ]; then
       if [ "$SYS_LINUX" ]; then  
         echo "  -> useradd $DAZZLE_USER --create-home --home $DAZZLE_HOME --system --shell $GIT_SHELL --password \"*\" --gid $DAZZLE_GROUP"
@@ -74,6 +76,9 @@ create_account () {
       elif [ "$SYS_FREEBSD" ]; then
         echo "  -> echo \"*\" | pw user add -n $DAZZLE_USER -g $DAZZLE_GROUP -m -s $GIT_SHELL -h -"	
         echo "*" | pw user add -n $DAZZLE_USER -g $DAZZLE_GROUP -m -s $GIT_SHELL -h -
+      elif [ "$SYS_OPENBSD" ]; then
+        echo "  -> echo \"*\" | useradd -m -s $GIT_SHELL -g $DAZZLE_GROUP $DAZZLE_USER"
+		useradd -m -s $GIT_SHELL -g $DAZZLE_GROUP $DAZZLE_USER
       fi
     else
       if [ "$SYS_LINUX" ]; then
@@ -81,9 +86,14 @@ create_account () {
         useradd $DAZZLE_USER --create-home --home $DAZZLE_HOME --system --shell $GIT_SHELL --password "*" --user-group
       elif [ "$SYS_FREEBSD" ]; then
         echo "  -> pw groupadd -n $DAZZLE_GROUP"
-        echo "  -> echo \"*\" | pw user add -n $DAZZLE_USER -g $DAZZLE_GROUP -m -s $GIT_SHELL -h -" 
-        pw groupadd -n $DAZZLE_GROUP
-        echo "*" | pw user add -n $DAZZLE_USER -g $DAZZLE_GROUP -m -s $GIT_SHELL -h -
+		pw groupadd -n $DAZZLE_GROUP
+        echo "  -> echo \"*\" | pw user add -n $DAZZLE_USER -g $DAZZLE_GROUP -m -s $GIT_SHELL -h -"         
+        pw user add -n $DAZZLE_USER -g $DAZZLE_GROUP -m -s $GIT_SHELL -h -
+      elif [ "$SYS_OPENBSD" ]; then
+        echo "  -> echo \"*\" | groupadd $DAZZLE_GROUP"
+		groupadd $DAZZLE_GROUP
+        echo "  -> echo \"*\" | useradd -m -s $GIT_SHELL -g $DAZZLE_GROUP $DAZZLE_USER"
+		useradd -m -s $GIT_SHELL -g $DAZZLE_GROUP $DAZZLE_USER
       fi
     fi
   fi
@@ -171,9 +181,6 @@ install_git () {
       echo "  -> pacman -S git"
       pacman -S git
 
-    elif [ "$SYS_FREEBSD" ] && [ -f "/usr/ports/devel/git/Makefile" ]; then
-      echo "  -> cd /usr/ports/devel/git | make install clean"
-      cd /usr/ports/devel/git && make install clean
     else
       echo "${BOLD}Could not install Git... Please install it manually before continuing.{$NORMAL}"
       echo
