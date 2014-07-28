@@ -5,12 +5,12 @@ Created to work on Debian and Red Hat based systems.
 
 # Note on this fork:
 
-This fork adds compatibility for FreeBSD systems, originally a patch
-written by aXon (https://github.com/aXon/Dazzle). I made minor changes
-to the patch and patched it against upstream master. Will probably
-support this as long as my server stays on FreeBSD =)
+This fork adds compatibility for FreeBSD & OpenBSD systems, and is based 
+on a patch written by aXon (https://github.com/aXon/Dazzle). I made some 
+improvements to his work and patched it against upstream master. I will
+probably support this as long as my servers stay on the BSD's. =)
 
-# Note for FreeBSD users:
+# Note for BSD users:
 
 Before using this program, you are required to have installed bash. 
 
